@@ -1,2 +1,2 @@
 # PFE-EMBEDDED-MACHINE
-server building 
+server building (rest api)
