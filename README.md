@@ -1,3 +1,4 @@
 # PFE-EMBEDDED-MACHINE
-server building (rest api)
-esp32 rbpi
+<span>1 . server building (rest api) raspberry</span>
+<br>
+<span>2 . esp32 controle serial connection</span>
