@@ -1,51 +1,16 @@
-// Define motor control pins
 #define IN1 18
 #define IN2 19
 #define IN3 22
 #define IN4 23
 
-// Define step delay (milliseconds)
-#define STEP_DELAY 50
+#define STEP_DELAY 15
+#define stop_step_delay 100
 
-void setup() {
-  // Initialize serial communication
-  Serial.begin(115200);
+int countedX = 0 ;
+int countedZ = 0 ;
 
-  // Set all motor control pins to output
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT);
-  pinMode(IN3, OUTPUT);
-  pinMode(IN4, OUTPUT);
+bool finish = false ;
 
-  // Initialize motors to stop
-  stopMotors();
-}
-
-// Function to move motors forward by a certain number of steps
-void moveForward(int steps) {
-  for (int i = 0; i < steps; i++) {
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, LOW);
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN4, LOW);
-    delay(STEP_DELAY);
-  }
-  stopMotors();
-}
-
-// Function to move motors backward by a certain number of steps
-void moveBackward(int steps) {
-  for (int i = 0; i < steps; i++) {
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, HIGH);
-    digitalWrite(IN3, LOW);
-    digitalWrite(IN4, HIGH);
-    delay(STEP_DELAY);
-  }
-  stopMotors();
-}
-
-// Function to stop motors
 void stopMotors() {
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, LOW);
@@ -53,41 +18,92 @@ void stopMotors() {
   digitalWrite(IN4, LOW);
 }
 
-// Function to parse and execute serial commands
-void executeCommand(String command) {
-  // Split the command into parts
+void setup() {
+  Serial.begin(115200);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  stopMotors();
+}
+
+void move(int steps_x ,int steps_z){
+while(finish == false){
+if(steps_x < countedX  && steps_x < 0){
+digitalWrite(IN1, HIGH);
+digitalWrite(IN2, LOW);
+digitalWrite(IN3, LOW);
+digitalWrite(IN4, LOW);
+delay(STEP_DELAY);
+countedX = countedX - 1 ; 
+}
+stopMotors();
+delay(stop_step_delay);
+if(steps_x > countedX  && steps_x > 0){
+digitalWrite(IN1, LOW);
+digitalWrite(IN2, HIGH);
+digitalWrite(IN3, LOW);
+digitalWrite(IN4, LOW);
+delay(STEP_DELAY);
+countedX = countedX + 1 ; 
+}
+stopMotors();
+delay(stop_step_delay);
+if(steps_z < countedZ  && steps_z < 0){
+digitalWrite(IN1, LOW);
+digitalWrite(IN2, LOW);
+digitalWrite(IN3, HIGH);
+digitalWrite(IN4, LOW);
+delay(STEP_DELAY);
+countedZ = countedZ - 1 ; 
+}
+stopMotors();
+delay(stop_step_delay);
+if(steps_z > countedZ  && steps_z > 0){
+digitalWrite(IN1, LOW);
+digitalWrite(IN2, LOW);
+digitalWrite(IN3, LOW);
+digitalWrite(IN4, HIGH);
+delay(STEP_DELAY);
+countedZ = countedZ + 1 ; 
+}
+stopMotors();
+delay(stop_step_delay);
+Serial.print("\n x-moving " + String(countedX)+" z-moving " + String(countedZ));
+if(countedX == steps_x && countedZ == steps_z){
+  finish = true ;
+  countedX = 0 ;
+  countedZ = 0 ;
+}
+}
+}
+
+void executeCommand(String command){
   int spaceIndex = command.indexOf(' ');
+  int slachIndex = command.indexOf('/');
   if (spaceIndex == -1) {
     Serial.println("Invalid command");
     return;
   }
-
   String action = command.substring(0, spaceIndex);
-  int steps = command.substring(spaceIndex + 1).toInt();
+  int steps_z = command.substring(spaceIndex + 1 , slachIndex).toInt();
+  int steps_x = command.substring(slachIndex + 1).toInt();
 
-  if (action == "FORWARD") {
-    moveForward(steps);
-    Serial.println("Motors moving forward " + String(steps) + " steps");
-  } else if (action == "BACKWARD") {
-    moveBackward(steps);
-    Serial.println("Motors moving backward " + String(steps) + " steps");
-  } else if (action == "STOP") {
-    stopMotors();
-    Serial.println("Motors stopped");
+  if (action == "MOVE") {
+    finish = false;
+    move(steps_x, steps_z);
+    Serial.println("\n Motors moving x " + String(steps_x) + " x_steps"+ "& Motors moving z " + String(steps_z) + " z_steps");
   } else {
     Serial.println("Unknown command");
   }
 }
 
-void loop() {
-  // Check if there is any data available on the serial port
+void loop(){
   if (Serial.available() > 0) {
-    // Read the incoming command as a string
     String command = Serial.readStringUntil('\n');
-    command.trim(); // Remove any leading/trailing whitespace
-
-    // Execute the command
+    command.trim(); 
     executeCommand(command);
+    Serial.print("finiched executing");
   }
 }
 
